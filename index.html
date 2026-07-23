@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ROI Calculator — Return on Investment | Tabutility</title>
-  <meta name="description" content="Calculate return on investment (ROI), annualised return, and profit/loss for any investment. Simple and detailed ROI analysis." />
-  <meta name="keywords" content="roi calculator, return on investment, investment return, annualised return, profit calculator" />
-  <link rel="canonical" href="https://roi.tabutility.com/" />
-  <meta property="og:title" content="ROI Calculator — Return on Investment" />
-  <meta property="og:description" content="Calculate ROI, annualised return and profit for any investment instantly." />
+  <title>Canada RRSP Calculator 2025 — Contribution & Tax Savings | Tabutility</title>
+  <meta name="description" content="Calculate RRSP contribution room, tax refund and projected retirement balance. 2025 RRSP limit $31,560." />
+  <meta name="keywords" content="rrsp calculator 2025, rrsp contribution room, rrsp tax refund, rrsp limit 2025, canada retirement savings" />
+  <link rel="canonical" href="https://canada-rrsp.tabutility.com/" />
+  <meta property="og:title" content="Canada RRSP Calculator 2025" />
+  <meta property="og:description" content="Calculate RRSP contribution room, tax refund and retirement balance for 2025." />
   <meta property="og:type" content="website" />
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇨🇦</text></svg>" />
   <meta name="robots" content="index, follow" />
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7039091592734005" crossorigin="anonymous"></script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-78VZWJ5B1W"></script>
@@ -24,25 +24,54 @@
 <script type="text/babel">
 //<![CDATA[
 const { useState } = React;
-function fmt(n){return '$'+Math.abs(Math.round(n)).toLocaleString();}
-function fmtPct(n){return (n>=0?'+':'')+n.toFixed(2)+'%';}
+function fmt(n){return 'C$'+Math.round(n).toLocaleString();}
+
+// 2025 Federal + provincial combined marginal rates (approximate)
+const PROVINCES = {
+  ON: { name: 'Ontario', rates: [{l:51446,r:0.2005},{l:102894,r:0.2915},{l:150000,r:0.3348},{l:220000,r:0.4341},{l:Infinity,r:0.4697}] },
+  BC: { name: 'BC', rates: [{l:45654,r:0.2006},{l:91310,r:0.2806},{l:104835,r:0.3116},{l:127299,r:0.3296},{l:172602,r:0.3816},{l:240716,r:0.4070},{l:Infinity,r:0.5353}] },
+  AB: { name: 'Alberta', rates: [{l:148269,r:0.25},{l:177922,r:0.3075},{l:237230,r:0.315},{l:355845,r:0.3675},{l:Infinity,r:0.48}] },
+  QC: { name: 'Quebec', rates: [{l:51780,r:0.27},{l:103545,r:0.3750},{l:126000,r:0.4250},{l:Infinity,r:0.5375}] },
+  MB: { name: 'Manitoba', rates: [{l:47000,r:0.2790},{l:100000,r:0.3275},{l:Infinity,r:0.5040}] },
+  SK: { name: 'Saskatchewan', rates: [{l:49720,r:0.2475},{l:142058,r:0.3375},{l:Infinity,r:0.4775}] },
+};
+
+function getMarginalRate(income, province) {
+  const p = PROVINCES[province];
+  let prev = 0;
+  for (const b of p.rates) {
+    if (income <= b.l) return b.r;
+    prev = b.l;
+  }
+  return p.rates[p.rates.length-1].r;
+}
 
 function App() {
-  const [initial, setInitial] = useState(10000);
-  const [final, setFinal] = useState(14500);
-  const [years, setYears] = useState(3);
-  const [fees, setFees] = useState(0);
+  const [income, setIncome] = useState(95000);
+  const [province, setProvince] = useState('ON');
+  const [contribution, setContrib] = useState(15000);
+  const [unused, setUnused] = useState(5000);
+  const [currentRRSP, setCurrent] = useState(30000);
+  const [age, setAge] = useState(38);
+  const [returnRate, setReturn] = useState(7);
 
-  const inv = Number(initial)||0;
-  const fin = Number(final)||0;
-  const yrs = Number(years)||1;
-  const fee = Number(fees)||0;
+  // 2025 RRSP limit
+  const RRSP_LIMIT = 31560;
+  const inc = Number(income)||0;
+  const earnedIncome = inc;
+  const newRoom = Math.min(earnedIncome * 0.18, RRSP_LIMIT);
+  const totalRoom = newRoom + (Number(unused)||0);
 
-  const netFinal = fin - fee;
-  const profit = netFinal - inv;
-  const roi = inv > 0 ? (profit / inv * 100) : 0;
-  const annualised = inv > 0 && yrs > 0 ? (Math.pow(netFinal/inv, 1/yrs)-1)*100 : 0;
-  const positive = profit >= 0;
+  const contrib = Math.min(Number(contribution)||0, totalRoom);
+  const marginalRate = getMarginalRate(inc, province);
+  const taxRefund = contrib * marginalRate;
+  const netCost = contrib - taxRefund;
+
+  // Growth projection
+  const years = Math.max(0, 71 - Number(age)); // must convert to RRIF by 71
+  const r = Number(returnRate)||7;
+  const pv = Number(currentRRSP)||0;
+  const fv = pv * Math.pow(1+r/100,years) + contrib * (Math.pow(1+r/100,years)-1)/(r/100);
 
   return (
     <div style={{maxWidth:520,margin:'0 auto',paddingBottom:40}}>
@@ -50,54 +79,75 @@ function App() {
         <a href="https://tabutility.com" style={{color:'#a5b4fc',textDecoration:'none',fontSize:14}}>← All Tools</a>
         <span style={{color:'#fff',fontWeight:700,fontSize:15}}>⚡ Tabutility</span>
       </div>
-      <div style={{background:'linear-gradient(135deg,#0891b2,#0e7490)',padding:'28px 20px',textAlign:'center',color:'#fff'}}>
-        <div style={{fontSize:36,marginBottom:8}}>📈</div>
-        <h1 style={{margin:'0 0 6px',fontSize:22,fontWeight:900}}>ROI Calculator</h1>
-        <p style={{margin:0,fontSize:13,opacity:0.85}}>Return on investment · annualised return · profit/loss</p>
+      <div style={{background:'linear-gradient(135deg,#dc2626,#991b1b)',padding:'28px 20px',textAlign:'center',color:'#fff'}}>
+        <div style={{fontSize:36,marginBottom:8}}>🇨🇦</div>
+        <h1 style={{margin:'0 0 6px',fontSize:22,fontWeight:900}}>Canada RRSP Calculator</h1>
+        <p style={{margin:0,fontSize:13,opacity:0.85}}>2025 — Contribution room · tax refund · retirement balance</p>
       </div>
       <div style={{padding:20}}>
         <div style={{background:'#fff',borderRadius:14,padding:20,boxShadow:'0 2px 12px rgba(0,0,0,0.06)',marginBottom:16}}>
-          {[['Initial Investment','$',initial,setInitial],['Final Value','$',final,setFinal],['Fees / Costs','$',fees,setFees]].map(([label,prefix,val,setter])=>(
-            <div key={label} style={{marginBottom:14}}>
-              <label style={{fontSize:13,fontWeight:600,color:'#374151',display:'block',marginBottom:6}}>{label}</label>
+          {[['Annual Employment Income','C$',income,setIncome],['RRSP Contribution (this year)','C$',contribution,setContrib],['Unused RRSP Room (from NOA)','C$',unused,setUnused],['Current RRSP Balance','C$',currentRRSP,setCurrent]].map(([l,p,v,s])=>(
+            <div key={l} style={{marginBottom:12}}>
+              <label style={{fontSize:13,fontWeight:600,color:'#374151',display:'block',marginBottom:5}}>{l}</label>
               <div style={{position:'relative'}}>
-                <span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',color:'#6b7280'}}>{prefix}</span>
-                <input type="number" value={val} onChange={e=>setter(e.target.value)}
-                  style={{width:'100%',padding:'11px 12px 11px 28px',borderRadius:10,border:'2px solid #e5e7eb',fontSize:16,boxSizing:'border-box'}} />
+                <span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',color:'#6b7280'}}>{p}</span>
+                <input type="number" value={v} onChange={e=>s(e.target.value)}
+                  style={{width:'100%',padding:'10px 12px 10px 36px',borderRadius:10,border:'2px solid #e5e7eb',fontSize:15,boxSizing:'border-box'}} />
               </div>
             </div>
           ))}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
+            <div>
+              <label style={{fontSize:12,fontWeight:600,color:'#374151',display:'block',marginBottom:5}}>Province</label>
+              <select value={province} onChange={e=>setProvince(e.target.value)}
+                style={{width:'100%',padding:'9px',borderRadius:10,border:'2px solid #e5e7eb',fontSize:13,background:'#fff'}}>
+                {Object.entries(PROVINCES).map(([k,v])=><option key={k} value={k}>{v.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{fontSize:12,fontWeight:600,color:'#374151',display:'block',marginBottom:5}}>Your Age</label>
+              <input type="number" value={age} onChange={e=>setAge(e.target.value)} min={18} max={70}
+                style={{width:'100%',padding:'9px 12px',borderRadius:10,border:'2px solid #e5e7eb',fontSize:14,boxSizing:'border-box'}} />
+            </div>
+          </div>
           <div>
-            <label style={{fontSize:13,fontWeight:600,color:'#374151',display:'block',marginBottom:6}}>Investment Period (years)</label>
-            <input type="number" value={years} onChange={e=>setYears(e.target.value)} min={0.1} step={0.5}
-              style={{width:'100%',padding:'11px 12px',borderRadius:10,border:'2px solid #e5e7eb',fontSize:16,boxSizing:'border-box'}} />
+            <label style={{fontSize:13,fontWeight:600,color:'#374151',display:'block',marginBottom:6}}>Investment Return: <span style={{color:'#dc2626'}}>{returnRate}%</span></label>
+            <input type="range" min={1} max={15} step={0.5} value={returnRate} onChange={e=>setReturn(e.target.value)} style={{width:'100%',accentColor:'#dc2626'}} />
           </div>
         </div>
 
-        <div style={{background: positive?'#f0fdf4':'#fef2f2',borderRadius:14,padding:24,textAlign:'center',marginBottom:16,boxShadow:'0 2px 12px rgba(0,0,0,0.06)'}}>
-          <div style={{fontSize:13,fontWeight:600,color:'#6b7280',marginBottom:4}}>TOTAL ROI</div>
-          <div style={{fontSize:52,fontWeight:900,color: positive?'#059669':'#dc2626'}}>{fmtPct(roi)}</div>
-          <div style={{fontSize:15,color: positive?'#059669':'#dc2626',fontWeight:700}}>{positive?'+':''}{fmt(profit)} {positive?'profit':'loss'}</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
+          <div style={{background:'#fef2f2',borderRadius:14,padding:16,textAlign:'center'}}>
+            <div style={{fontSize:11,fontWeight:700,color:'#991b1b'}}>TAX REFUND</div>
+            <div style={{fontSize:28,fontWeight:900,color:'#dc2626',margin:'4px 0'}}>{fmt(taxRefund)}</div>
+            <div style={{fontSize:11,color:'#6b7280'}}>{(marginalRate*100).toFixed(1)}% marginal rate</div>
+          </div>
+          <div style={{background:'#f0fdf4',borderRadius:14,padding:16,textAlign:'center'}}>
+            <div style={{fontSize:11,fontWeight:700,color:'#166534'}}>NET COST</div>
+            <div style={{fontSize:28,fontWeight:900,color:'#16a34a',margin:'4px 0'}}>{fmt(netCost)}</div>
+            <div style={{fontSize:11,color:'#6b7280'}}>after tax refund</div>
+          </div>
         </div>
 
         <div style={{background:'#fff',borderRadius:14,padding:20,boxShadow:'0 2px 12px rgba(0,0,0,0.06)'}}>
           {[
-            ['Initial Investment', fmt(inv)],
-            ['Final Value (before fees)', fmt(fin)],
-            ['Fees / Transaction Costs', fee > 0 ? '-'+fmt(fee) : '$0'],
-            ['Net Final Value', fmt(netFinal)],
-            ['Net Profit / Loss', (positive?'+':'-')+fmt(profit)],
-            ['Total ROI', fmtPct(roi)],
-            ['Annualised Return (CAGR)', fmtPct(annualised)+' / yr'],
+            ['2025 RRSP Dollar Limit', fmt(RRSP_LIMIT)],
+            ['New Room (18% of income)', fmt(newRoom)],
+            ['Unused Room Carried Forward', fmt(Number(unused)||0)],
+            ['Total Room Available', fmt(totalRoom)],
+            ['Contribution', fmt(contrib)],
+            ['Marginal Tax Rate', (marginalRate*100).toFixed(1)+'%'],
+            ['Tax Refund', fmt(taxRefund)],
+            ['Net Cost to You', fmt(netCost)],
+            ['Projected RRSP at 71', fmt(fv)],
           ].map(([l,v])=>(
             <div key={l} style={{display:'flex',justifyContent:'space-between',padding:'9px 0',borderBottom:'1px solid #f0f0f0',fontSize:14}}>
-              <span style={{color:'#6b7280'}}>{l}</span>
-              <strong style={{color: l.includes('Loss')||l.includes('Fees')&&fee>0?'#dc2626':l.includes('ROI')||l.includes('Profit')||l.includes('CAGR')?positive?'#059669':'#dc2626':'#1a1a2e'}}>{v}</strong>
+              <span style={{color:'#6b7280'}}>{l}</span><strong style={{color:l.includes('Projected')?'#dc2626':l.includes('Refund')?'#16a34a':'#1a1a2e'}}>{v}</strong>
             </div>
           ))}
         </div>
-        <div style={{background:'#ecfeff',borderRadius:12,padding:16,marginTop:16,fontSize:13,color:'#0e7490',lineHeight:1.6}}>
-          <strong>CAGR</strong> (Compound Annual Growth Rate) is the annualised ROI — useful when comparing investments held for different time periods.
+        <div style={{background:'#fef2f2',borderRadius:12,padding:16,marginTop:16,fontSize:13,color:'#991b1b',lineHeight:1.6}}>
+          <strong>2025:</strong> RRSP limit C$31,560 (18% of 2024 earned income, whichever is less). Deadline: March 1, 2026 for 2025 tax year. Must convert to RRIF or annuity by Dec 31 of year you turn 71. Contributions reduce taxable income at your marginal rate.
         </div>
       </div>
     </div>
